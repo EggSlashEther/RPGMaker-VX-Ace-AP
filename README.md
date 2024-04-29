@@ -12,7 +12,9 @@ Your game will now be able to receive ReceiveItem packets from Archipelago!
 
 ## Notes
 `$archipelago` is your client. All Archipelago-related methods must use it.
+
 Call `$archipelago.connect` to connect to the multiworld
+
 All other methods/accessors are almost identical to the ones provided by [archipelago.js](https://thephar.github.io/Archipelago.JS/)
 
 Feel free to message me (Discord: eggslashether) or email me (archipelago_rb@eggslashether.com) if you have any issues! I'm always willing to help.
