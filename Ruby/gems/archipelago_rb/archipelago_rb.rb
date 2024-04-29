@@ -1,0 +1,1 @@
+require_relative 'archipelago_rb/client'
