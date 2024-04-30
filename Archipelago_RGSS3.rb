@@ -21,7 +21,6 @@
 #       (https://github.com/Ancurio/mkxp)
 #  mkxp-z: All of the maintainers + Ancurio's Discord server
 #       (https://github.com/mkxp-z/mkxp-z)
-#  
 #==============================================================================
 #==============================================================================
 # ** SETUP
