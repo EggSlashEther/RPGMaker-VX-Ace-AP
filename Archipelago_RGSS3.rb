@@ -8,8 +8,10 @@
 #  set this up! (LINK HERE)
 #
 #  Credits:
-#  Authors: EggSlashEther, Scrungip 
-#       (contact@eggslashether.com), (Discord: scrungip)
+#  Author: EggSlashEther
+#       (contact@eggslashether.com)
+#  Tester: Scrungip
+#       (Discord: scrungip)
 #  Archipelago: All of the wonderful developers, staff and players
 #       (https://archipelago.gg/)
 #  mkxp: Ancurio + everyone else who made commits over the years
@@ -21,7 +23,7 @@
 #==============================================================================
 # ** SETUP
 #------------------------------------------------------------------------------
-#  Ignore me! I'm just importing required libraries. Get to CONFIGURATION!
+#  Ignore me! I'm just importing required libraries. Go to CONFIGURATION!
 #==============================================================================
 #--------------------------------------------------------------------------
 # * Add "Ruby" directory to load path and import archipelago_rb
@@ -59,6 +61,8 @@
 #  restricted to only game items! Here's some examples:
 #  22111 => "$game_party.gain_item($data_items[11], 22)", 
 #   * Gives 22 of Item ID 11.
+#  100..110 => "$game_party.gain_item($data_items[1], 2)",
+#   * 100, 101, etc, 110 each give 2 of Item ID 1.
 #  10001..10010 => "$game_party.gain_item($data_items[(1..10)], 1)",
 #   * 10001 gives 1 of Item ID 1, 10002 gives 1 of Item ID 2, etc, until 10
 #   * Ranges made this way must both have the same size!
