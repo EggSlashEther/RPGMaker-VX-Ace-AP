@@ -1,6 +1,9 @@
 #==============================================================================
 # ** Archipelago_RGSS3
 #------------------------------------------------------------------------------
+#  All lines of text that start with # are comments and aren't read as code.
+#  They'll appear in GREEN in the RPGMaker VX Ace script editor.
+#
 #  This script uses archipelago_rb to allow RPGMaker VX Ace games to connect
 #  to the Archipelago Multiworld System.
 #
