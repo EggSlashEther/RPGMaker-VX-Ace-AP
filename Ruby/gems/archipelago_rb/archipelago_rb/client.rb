@@ -30,9 +30,20 @@ module Archipelago
 
         def connect
             return if @client_connect_status != ConnectStatus::DISCONNECTED
+            @terminate = false
             Thread.new do
+<<<<<<< Updated upstream
                 url = "wss://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
                 @client_socket = WebSocket::Client::Simple.connect(url)
+=======
+                begin
+                    url = "wss://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
+                    @client_socket = WebSocket::Client::Simple.connect(url)
+                rescue
+                    url = "ws://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
+                    @client_socket = WebSocket::Client::Simple.connect(url)
+                end
+>>>>>>> Stashed changes
             
                 @client_socket.on :open do
                 end
@@ -52,12 +63,10 @@ module Archipelago
             
                 loop do
                     sleep 1
-                    if @terminate
-                        @terminate = false
-                        break
-                    end
+                    break if @terminate
                 end
             end
+            
         end
 
         def disconnect
