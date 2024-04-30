@@ -31,7 +31,7 @@ module Archipelago
         def connect
             return if @client_connect_status != ConnectStatus::DISCONNECTED
             Thread.new do
-                url = "ws://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
+                url = "wss://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
                 @client_socket = WebSocket::Client::Simple.connect(url)
             
                 @client_socket.on :open do
