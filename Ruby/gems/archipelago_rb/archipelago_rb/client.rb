@@ -5,6 +5,7 @@ require_relative 'locations'
 require_relative 'data'
 require_relative 'items'
 require_relative 'players'
+require_relative 'hints'
 require 'websocket-client-simple'
 require 'json'
 
