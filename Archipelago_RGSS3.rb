@@ -87,22 +87,28 @@
 #==============================================================================
 #--------------------------------------------------------------------------
 # * Advanced Details
-#  'receiveditem_index_var' is the ID of the game variable that will store 
-#  the expected ReceivedItems index. Choose a game variable that isn't in 
-#  use! 
-#    * DEFAULT: 4990
-#    * Try to reserve game variables 4990-5000 if possible for future
-#      features.
-#  'disable_saves' determines whether saving should be disabled. Not sure
-#  WHY you'd want to do this, but here's the option!
+#  '$archipelago_data_vars' is a Range of game variable IDs that will store 
+#  the expected ReceivedItems index. Choose a range that isn't in use!
+#  Must span at least 10 consecutive IDs. Some are reserved for future
+#  features.
+#    * DEFAULT: 4990..5000
+#  'disable_load_autoconnect' determines whether save/load overrides that
+#  allow for autoconnecting back to a multiworld when you load a file
+#  are active. You should disable this if your game already overrides these
+#  methods!
 #    * DEFAULT: false
 #--------------------------------------------------------------------------
-    receiveditem_index_var = 4990
-    disable_saves = false
+    $archipelago_data_vars = 4990..5000
+    disable_load_autoconnect = false
 #==============================================================================
 # ** CODE
 #------------------------------------------------------------------------------
 #  The feeble should not proceed past this point. Here be dragons.
+#  Notes:
+#    * 'archipelago_data_vars' legend:
+#      * [0]: Expected ReceivedItems index
+#      * [1]: Store connect_info if !disable_load_autoconnect
+#      * Others: Reserved for future use
 #==============================================================================
 #--------------------------------------------------------------------------
 # * Method: Get ranges from string
@@ -191,15 +197,37 @@
         "items_handling" => items_handling
     }
 #--------------------------------------------------------------------------
+# * Override DataManager save/load methods
+#--------------------------------------------------------------------------
+    if !disable_load_autoconnect
+        module DataManager
+            def self.save_game(index)
+                $game_variables[$archipelago_data_vars.to_a[1]] = Marshal.dump($archipelago.connect_info)
+                save_game_without_rescue(index)
+            rescue
+                delete_save_file(index)
+                false
+            end
+
+            def self.load_game(index)
+                load_game_without_rescue(index)
+                $archipelago.connect_info = Marshal.load($game_variables[$archipelago_data_vars.to_a[1]])
+                $archipelago.connect
+            rescue 
+                false
+            end
+        end
+    end
+#--------------------------------------------------------------------------
 # * Attach RPGMaker-specific listeners
 #--------------------------------------------------------------------------
     $archipelago.add_listener("ReceivedItems") do |msg|
         item_counter = msg["index"]
 
         msg["items"].each do |item|
-            if $game_variables[receiveditem_index_var] == item_counter
+            if $game_variables[$archipelago_data_vars.to_a[0]] == item_counter
                 eval(expanded_receiveditem_methods[item["item"]]) 
-                $game_variables[receiveditem_index_var] += 1
+                $game_variables[$archipelago_data_vars.to_a[0]] += 1
             end
             item_counter += 1
         end
