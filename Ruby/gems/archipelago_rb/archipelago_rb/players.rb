@@ -2,7 +2,7 @@ module Archipelago
 
     class Client
 
-        class PlayersManager
+        class Players
 
             def initialize(client)
                 @client = client

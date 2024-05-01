@@ -2,7 +2,7 @@ module Archipelago
 
     class Client
 
-        class LocationsManager
+        class Locations
 
             def initialize(client)
                 @client = client

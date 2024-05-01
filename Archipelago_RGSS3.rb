@@ -58,7 +58,7 @@
     items_handling = Archipelago::ItemsHandlingFlags::REMOTE_ALL
 #--------------------------------------------------------------------------
 # * ReceivedItem Methods
-#  This data structure contains the methods you want to call when this
+#  This hash contains the methods you want to call when this
 #  client gets a ReceivedItem of a specific ID. This doesn't have to be
 #  restricted to only game items! Here's some examples:
 #  22111 => "$game_party.gain_item($data_items[11], 22)", 
@@ -79,6 +79,26 @@
         # Put your methods here. See the above comment for expected format.
         # Make sure to put a comma after every entry, except the last! 
     }
+#==============================================================================
+# ** ADVANCED
+#------------------------------------------------------------------------------
+#  For more complicated games - or more advanced users - additional options
+#  are provided here to further customize how this integration works.
+#==============================================================================
+#--------------------------------------------------------------------------
+# * Advanced Details
+#  'receiveditem_index_var' is the ID of the game variable that will store 
+#  the expected ReceivedItems index. Choose a game variable that isn't in 
+#  use! 
+#    * DEFAULT: 4990
+#    * Try to reserve game variables 4990-5000 if possible for future
+#      features.
+#  'disable_saves' determines whether saving should be disabled. Not sure
+#  WHY you'd want to do this, but here's the option!
+#    * DEFAULT: false
+#--------------------------------------------------------------------------
+    receiveditem_index_var = 4990
+    disable_saves = false
 #==============================================================================
 # ** CODE
 #------------------------------------------------------------------------------
@@ -174,8 +194,14 @@
 # * Attach RPGMaker-specific listeners
 #--------------------------------------------------------------------------
     $archipelago.add_listener("ReceivedItems") do |msg|
+        item_counter = msg["index"]
+
         msg["items"].each do |item|
-            eval(expanded_receiveditem_methods[item["item"]])
+            if $game_variables[receiveditem_index_var] == item_counter
+                eval(expanded_receiveditem_methods[item["item"]]) 
+                $game_variables[receiveditem_index_var] += 1
+            end
+            item_counter += 1
         end
     end
 

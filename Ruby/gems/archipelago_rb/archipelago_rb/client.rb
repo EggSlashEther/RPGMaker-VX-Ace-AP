@@ -12,17 +12,18 @@ module Archipelago
 
     class Client
         attr_accessor :connect_info
-        attr_reader :data, :locations, :items, :players, :client_connect_status, :client_socket
+        attr_reader :data, :locations, :items, :players, :hints, :client_connect_status, :client_socket
 
         def initialize()
             @connect_info = {}
             @terminate = false
             @client_version = Objects::Version.new(0, 4, 6)
             @client_connect_status = ConnectStatus::DISCONNECTED
-            @data = DataManager.new()
-            @locations = LocationsManager.new(self)
-            @items = ItemsManager.new(self)
-            @players = PlayersManager.new(self)
+            @data = Data.new()
+            @locations = Locations.new(self)
+            @items = Items.new(self)
+            @players = Players.new(self)
+            @hints = Hints.new(self)
             @listeners = Hash.new { |hash, key| hash[key] = []}
 
             add_default_listeners()
@@ -32,10 +33,6 @@ module Archipelago
             return if @client_connect_status != ConnectStatus::DISCONNECTED
             @terminate = false
             Thread.new do
-<<<<<<< Updated upstream
-                url = "wss://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
-                @client_socket = WebSocket::Client::Simple.connect(url)
-=======
                 begin
                     url = "wss://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
                     @client_socket = WebSocket::Client::Simple.connect(url)
@@ -43,7 +40,6 @@ module Archipelago
                     url = "ws://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
                     @client_socket = WebSocket::Client::Simple.connect(url)
                 end
->>>>>>> Stashed changes
             
                 @client_socket.on :open do
                 end

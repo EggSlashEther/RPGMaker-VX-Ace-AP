@@ -2,7 +2,7 @@ module Archipelago
 
     class Client
 
-        class ItemsManager
+        class Items
             attr_accessor :received, :index
 
             def initialize(client)

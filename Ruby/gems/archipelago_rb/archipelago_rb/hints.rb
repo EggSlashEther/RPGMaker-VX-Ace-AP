@@ -2,7 +2,7 @@ module Archipelago
 
     class Client
 
-        class HintsManager
+        class Hints
 
             def initialize(client)
                 @client = client
