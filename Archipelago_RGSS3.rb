@@ -57,6 +57,48 @@
     game = "ChecksFinder"
     items_handling = Archipelago::ItemsHandlingFlags::REMOTE_ALL
 #--------------------------------------------------------------------------
+# * Progressive Methods
+#  This hash contains calls you want to make for progressive items.
+#  Each key/value pair should be a string and an array of methods in
+#  string form. Then, you invoke the method progressive(key) in the
+#  receiveditems_methods hash below. Whenever that progressive(key) method 
+#  is called, it calls the next function in the array. Make sure your keys 
+#  in receiveditems_methods are escaped!
+#  Example:
+#   progressive_methods = {
+#       "sword" => [
+#           "$game_party.gain_item($data_items[1], 1)",
+#           "$game_party.gain_item($data_items[2], 1)",
+#           "$game_party.gain_item($data_items[3], 1)"
+#       ],
+#       "wand" => [
+#           "$game_party.gain_item($data_items[(4..6), 1])"
+#       ]
+#   }
+#   receiveditem_methods = {
+#       80001 => "progressive(\"sword\")" 
+#       80002 => "progressive(\"wand\")"
+#   }
+#     * When ID 80001 is first received, trigger the first method in the 
+#     array, in this case granting 1 of Game Item ID 1.
+#     * When ID 80001 is received again, the second method in the array 
+#     triggers, granting 1 of Game Item ID 2.
+#     * When ID 80001 is received again again, trigger the third method 
+#     in the array, granting 1 of Game Item ID 3.
+#     * Ranges within brackets (like in the section below) work too!
+#     * Like with ID 80002, with Game Item IDs 4 through 6 when called
+#     one, two and three times respectively.
+#
+#  Note: If you ever call a progressive method more times than there are
+#  entries in its array, nothing will happen, so don't worry about it.
+#  MAKE SURE YOU CALL THE PROGRESSIVE METHOD IN THE ReceivedItem Methods
+#  SECTION!
+#--------------------------------------------------------------------------
+    progressive_methods = {
+        # Put your methods here. See the above comment for expected format.
+        # Make sure to put a comma after every entry, except the last!
+    }
+#--------------------------------------------------------------------------
 # * ReceivedItem Methods
 #  This hash contains the methods you want to call when this
 #  client gets a ReceivedItem of a specific ID. This doesn't have to be
@@ -67,17 +109,23 @@
 #   * 100, 101, etc, 110 each give 2 of Item ID 1.
 #  10001..10010 => "$game_party.gain_item($data_items[(1..10)], 1)",
 #   * 10001 gives 1 of Item ID 1, 10002 gives 1 of Item ID 2, etc, until 10
-#   * Ranges made this way must both have the same size!
+#   * Ranges made this way must be in brackets () and both have the same size!
+#   * You can include more than one range in the value string, in which case
+#   * all ranges must be the same size.
 #  33333 => "$game_party.add_actor(1)"
 #   * Adds Actor ID 1 to your party.
 #  42069 => "$game_variables[1] += 5"
 #   * Adds 5 to the 1st game variable.
 #  69420 => "SceneManager.goto(Scene_Gameover)"
 #   * Triggers a game over.
+#  100000..100003 => "progressive(\"revolver\")"
+#   * Triggers the next method in the "revolver" progressive array.
+#   * Make sure you escape the ""! (Put \ like in the example above.)
 #--------------------------------------------------------------------------
     receiveditem_methods = {
         # Put your methods here. See the above comment for expected format.
-        # Make sure to put a comma after every entry, except the last! 
+        # Make sure to put a comma after every entry, except the last!
+        # If you defined any progressive methods, make sure you call them!
     }
 #==============================================================================
 # ** ADVANCED
@@ -91,9 +139,9 @@
 #  Archipelago data. Choose a range that isn't in use! Must span at least 10 
 #  consecutive IDs. Some are reserved for future features.
 #    * DEFAULT: 4990..5000
-#  'disable_load_autoconnect' determines your game will automatically try
+#  'disable_load_autoconnect' determines if your game will automatically try
 #  to reconnect to the multiworld when loading a save file. This overrides
-#  the default save/load methods, so use this if your game also overrides!
+#  the default save/load methods, so use this if your game also overrides it!
 #    * DEFAULT: false
 #--------------------------------------------------------------------------
     $archipelago_data_vars = 4990..5000
@@ -106,6 +154,7 @@
 #    * 'archipelago_data_vars' legend:
 #      * [0]: Expected ReceivedItems index
 #      * [1]: Store connect_info if !disable_load_autoconnect
+#      * [2]: Store progressive counts
 #      * Others: Reserved for future use
 #==============================================================================
 #--------------------------------------------------------------------------
@@ -149,6 +198,39 @@
         return modified_string
     end
 #--------------------------------------------------------------------------
+# * Method: Expand Progressive methods into new hash (with arrays)
+#--------------------------------------------------------------------------
+    def expand_progressive_methods(progressive_methods)
+        expanded_progressive_methods = {}
+
+        progressive_methods.each do |key, value|
+            iterate_to = 0
+            pro_method_array = []
+            value.each do |pro_method|
+                ranges = get_rng_from_str(pro_method)
+                if ranges
+                    modding_string = replace_rng_with_pl(pro_method)
+                    ranges.each do |range|
+                        iterate_to = range.to_a.length if (iterate_to == 0) || (range.to_a.length < iterate_to)
+                    end
+                    iterate_to.times do |i|
+                        ints_to_add = []
+                        ranges.each do |range|
+                            ints_to_add << (range.to_a[i])
+                        end
+                        modded_string = replace_pl_with_int(modding_string, ints_to_add)
+                        pro_method_array << modded_string
+                    end
+                else
+                    pro_method_array << pro_method
+                end
+            end
+            expanded_progressive_methods[key] = pro_method_array
+        end
+
+        return expanded_progressive_methods
+    end
+#--------------------------------------------------------------------------
 # * Method: Expand ReceivedItem methods into new hash
 #--------------------------------------------------------------------------
     def expand_receiveditem_methods(receiveditem_methods)
@@ -162,7 +244,7 @@
                     key.each_with_index do |v, i|
                         ints_to_add = []
                         ranges.each do |range|
-                            ints_to_add.append(range.to_a[i])
+                            ints_to_add << (range.to_a[i])
                         end
                         modded_string = replace_pl_with_int(modding_string, ints_to_add)
                         expanded_receiveditem_methods[v] = modded_string
@@ -180,9 +262,24 @@
         return expanded_receiveditem_methods
     end
 #--------------------------------------------------------------------------
-# * Expand ReceivedItem methods into new hash
+# * Expand method hashes into new hashes
 #--------------------------------------------------------------------------
-    expanded_receiveditem_methods = expand_receiveditem_methods(receiveditem_methods)
+    $expanded_progressive_methods = expand_progressive_methods(progressive_methods)
+    $expanded_receiveditem_methods = expand_receiveditem_methods(receiveditem_methods)
+#--------------------------------------------------------------------------
+# * Method: Eval progressive methods
+#--------------------------------------------------------------------------
+    $progressive_counts = {}
+    def progressive(key)
+        if $expanded_progressive_methods.include?(key)
+            $progressive_counts[key] = 0 unless $progressive_counts.include?(key)
+            eval_target = $expanded_progressive_methods[key].fetch($progressive_counts[key], "puts \"[Archipelago_RGSS3] No defined method for index #{$progressive_counts[key]} in key #{key} in progressive_methods!\"")
+            eval(eval_target)
+            $progressive_counts[key] += 1
+        else
+            puts "[Archipelago_RGSS3] Key \"#{key}\" not found in progressive_methods!"
+        end
+    end
 #--------------------------------------------------------------------------
 # * Initialize Archipelago Client
 #--------------------------------------------------------------------------
@@ -200,6 +297,7 @@
     if !disable_load_autoconnect
         module DataManager
             def self.save_game(index)
+                $game_variables[$archipelago_data_vars.to_a[2]] = Marshal.dump($progressive_counts)
                 $game_variables[$archipelago_data_vars.to_a[1]] = Marshal.dump($archipelago.connect_info)
                 save_game_without_rescue(index)
             rescue
@@ -209,6 +307,7 @@
 
             def self.load_game(index)
                 load_game_without_rescue(index)
+                $progressive_counts = Marshal.load($game_variables[$archipelago_data_vars.to_a[2]])
                 $archipelago.connect_info = Marshal.load($game_variables[$archipelago_data_vars.to_a[1]])
                 $archipelago.connect
             rescue 
@@ -224,7 +323,8 @@
 
         msg["items"].each do |item|
             if $game_variables[$archipelago_data_vars.to_a[0]] == item_counter
-                eval(expanded_receiveditem_methods[item["item"]]) 
+                eval_target = $expanded_receiveditem_methods.fetch(item["item"], "puts \"[Archipelago_RGSS3] No defined method for ReceivedItem ID #{item["item"]}!\"")
+                eval(eval_target) 
                 $game_variables[$archipelago_data_vars.to_a[0]] += 1
             end
             item_counter += 1
