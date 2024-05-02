@@ -88,14 +88,12 @@
 #--------------------------------------------------------------------------
 # * Advanced Details
 #  '$archipelago_data_vars' is a Range of game variable IDs that will store 
-#  the expected ReceivedItems index. Choose a range that isn't in use!
-#  Must span at least 10 consecutive IDs. Some are reserved for future
-#  features.
+#  Archipelago data. Choose a range that isn't in use! Must span at least 10 
+#  consecutive IDs. Some are reserved for future features.
 #    * DEFAULT: 4990..5000
-#  'disable_load_autoconnect' determines whether save/load overrides that
-#  allow for autoconnecting back to a multiworld when you load a file
-#  are active. You should disable this if your game already overrides these
-#  methods!
+#  'disable_load_autoconnect' determines your game will automatically try
+#  to reconnect to the multiworld when loading a save file. This overrides
+#  the default save/load methods, so use this if your game also overrides!
 #    * DEFAULT: false
 #--------------------------------------------------------------------------
     $archipelago_data_vars = 4990..5000
