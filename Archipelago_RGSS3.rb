@@ -66,18 +66,18 @@
 #  in receiveditems_methods are escaped!
 #  Example:
 #   progressive_methods = {
-#       "sword" => [
+#       sword: [
 #           "$game_party.gain_item($data_items[1], 1)",
 #           "$game_party.gain_item($data_items[2], 1)",
 #           "$game_party.gain_item($data_items[3], 1)"
 #       ],
-#       "wand" => [
+#       wand: [
 #           "$game_party.gain_item($data_items[(4..6), 1])"
 #       ]
 #   }
 #   receiveditem_methods = {
-#       80001 => "progressive(\"sword\")" 
-#       80002 => "progressive(\"wand\")"
+#       80001 => "progressive(:sword)" 
+#       80002 => "progressive(:wand)"
 #   }
 #     * When ID 80001 is first received, trigger the first method in the 
 #     array, in this case granting 1 of Game Item ID 1.
@@ -118,9 +118,8 @@
 #   * Adds 5 to the 1st game variable.
 #  69420 => "SceneManager.goto(Scene_Gameover)"
 #   * Triggers a game over.
-#  100000..100003 => "progressive(\"revolver\")"
+#  100000..100003 => "progressive(:revolver)"
 #   * Triggers the next method in the "revolver" progressive array.
-#   * Make sure you escape the ""! (Put \ like in the example above.)
 #--------------------------------------------------------------------------
     receiveditem_methods = {
         # Put your methods here. See the above comment for expected format.
