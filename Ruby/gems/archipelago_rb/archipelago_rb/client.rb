@@ -130,7 +130,7 @@ module Archipelago
                     "99999", 
                     @client_version.to_hash, 
                     @connect_info["items_handling"], 
-                    ["AP"], false
+                    ["AP"], true
                 )
 
                 @client_socket.send(connect_packet.to_json)
