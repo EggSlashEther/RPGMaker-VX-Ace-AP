@@ -55,6 +55,10 @@ module Archipelago
                 end
             end
 
+            def slotData
+                return @game_data["slot_data"]
+            end
+
             def method_missing(method_name)
                 return @game_data[method_name.to_s]
             end
