@@ -344,7 +344,9 @@
             loop do
                 sleep 0.1
                 if unhandled_items.any?
-                    unhandled_items.each do |item|
+                    current = unhandled_items
+                    unhandled_items = unhandled_items - current
+                    current.each do |item|
                         eval_target = $expanded_receiveditem_methods.fetch(item, "puts \"[Archipelago_RGSS3] No defined method for ReceivedItem ID #{item}!\"")
                         eval(eval_target)
                     end
