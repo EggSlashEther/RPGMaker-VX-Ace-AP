@@ -50,19 +50,23 @@
 #==============================================================================
 #--------------------------------------------------------------------------
 # * Basic Details
-#  'game' is the game name as it appears in your APWorld.
-#  'items_handling' determines what items this client can handle.
+#  '$archipelago_gamename' is the game name as it appears in your APWorld.
+#  '$archipelago_items_handling' determines what items this client can handle.
 #    * DEFAULT: Archipelago::ItemsHandlingFlags::REMOTE_ALL
+#  '$load_autoconnect' determines if the game will automatically try to
+#  reconnect to its multiworld when loading a save.
+#    * DEFAULT: true
 #--------------------------------------------------------------------------
-    game = "ChecksFinder"
-    items_handling = Archipelago::ItemsHandlingFlags::REMOTE_ALL
+    $archipelago_gamename = "ChecksFinder"
+    $archipelago_items_handling = Archipelago::ItemsHandlingFlags::REMOTE_ALL
+    $load_autoconnect = true
 #--------------------------------------------------------------------------
 # * Progressive Methods
 #  This hash contains calls you want to make for progressive items.
-#  Each key/value pair should be a string and an array of methods in
+#  Each key/value pair should be a symbol and an array of methods in
 #  string form. Then, you invoke the method progressive(key) in the
-#  receiveditems_methods hash below. Whenever that progressive(key) method 
-#  is called, it calls the next function in the array. Make sure your keys 
+#  receiveditems_methods hash below. Whenever that progressive(key) method
+#  is called, it calls the next function in the array. Make sure your keys
 #  in receiveditems_methods are escaped!
 #  Example:
 #   progressive_methods = {
@@ -71,19 +75,19 @@
 #           "$game_party.gain_item($data_items[2], 1)",
 #           "$game_party.gain_item($data_items[3], 1)"
 #       ],
-#       wand: [
+#       wand_upgrade: [
 #           "$game_party.gain_item($data_items[(4..6), 1])"
 #       ]
 #   }
 #   receiveditem_methods = {
-#       80001 => "progressive(:sword)" 
-#       80002 => "progressive(:wand)"
+#       80001 => "progressive(:sword)"
+#       80002 => "progressive(:wand_upgrade)"
 #   }
-#     * When ID 80001 is first received, trigger the first method in the 
+#     * When ID 80001 is first received, trigger the first method in the
 #     array, in this case granting 1 of Game Item ID 1.
-#     * When ID 80001 is received again, the second method in the array 
+#     * When ID 80001 is received again, the second method in the array
 #     triggers, granting 1 of Game Item ID 2.
-#     * When ID 80001 is received again again, trigger the third method 
+#     * When ID 80001 is received again again, trigger the third method
 #     in the array, granting 1 of Game Item ID 3.
 #     * Ranges within brackets (like in the section below) work too!
 #     * Like with ID 80002, with Game Item IDs 4 through 6 when called
@@ -103,7 +107,7 @@
 #  This hash contains the methods you want to call when this
 #  client gets a ReceivedItem of a specific ID. This doesn't have to be
 #  restricted to only game items! Here's some examples:
-#  22111 => "$game_party.gain_item($data_items[11], 22)", 
+#  22111 => "$game_party.gain_item($data_items[11], 22)",
 #   * Gives 22 of Item ID 11.
 #  100..110 => "$game_party.gain_item($data_items[1], 2)",
 #   * 100, 101, etc, 110 each give 2 of Item ID 1.
@@ -133,35 +137,19 @@
 #  are provided here to further customize how this integration works.
 #==============================================================================
 #--------------------------------------------------------------------------
-# * Advanced Details
-#  '$archipelago_data_vars' is a Range of game variable IDs that will store 
-#  Archipelago data. Choose a range that isn't in use! Must span at least 10 
-#  consecutive IDs. Some are reserved for future features.
-#    * DEFAULT: 4990..5000
-#  'disable_load_autoconnect' determines if your game will automatically try
-#  to reconnect to the multiworld when loading a save file. This overrides
-#  the default save/load methods, so use this if your game also overrides it!
-#    * DEFAULT: false
+# * There are currently no advanced settings.
 #--------------------------------------------------------------------------
-    $archipelago_data_vars = 4990..5000
-    disable_load_autoconnect = false
 #==============================================================================
 # ** CODE
 #------------------------------------------------------------------------------
 #  The feeble should not proceed past this point. Here be dragons.
-#  Notes:
-#    * 'archipelago_data_vars' legend:
-#      * [0]: Expected ReceivedItems index
-#      * [1]: Store connect_info if !disable_load_autoconnect
-#      * [2]: Store progressive counts
-#      * Others: Reserved for future use
 #==============================================================================
 #--------------------------------------------------------------------------
 # * Method: Get ranges from string
 #--------------------------------------------------------------------------
     def get_rng_from_str(string)
         range_regex = /\((\d+)(\.{2,3})(\d+)\)/
-        ranges = []
+                ranges = []
 
         string.scan(range_regex) do |match|
             start_value = match[0].to_i
@@ -177,8 +165,8 @@
 #--------------------------------------------------------------------------
     def replace_rng_with_pl(string)
         range_regex = /\((\d+)(\.{2,3})(\d+)\)/
-        
-        ranges = string.scan(range_regex)
+
+                ranges = string.scan(range_regex)
         string = string.gsub(range_regex, "\uFFFC") if ranges.any?
 
         return string
@@ -257,7 +245,7 @@
                 expanded_receiveditem_methods[key] = value
             end
         end
-        
+
         return expanded_receiveditem_methods
     end
 #--------------------------------------------------------------------------
@@ -286,48 +274,113 @@
     $archipelago.connect_info = {
         "hostname" => CFG["Archipelago_Hostname"],
         "port" => CFG["Archipelago_Port"].to_i,
-        "game" => game,
+        "game" => $archipelago_gamename,
         "name" => CFG["Archipelago_Name"],
-        "items_handling" => items_handling
+        "items_handling" => $archipelago_items_handling
     }
 #--------------------------------------------------------------------------
-# * Override DataManager save/load methods
+# * Override Cache to load Custom icons
 #--------------------------------------------------------------------------
-    if !disable_load_autoconnect
-        module DataManager
-            def self.save_game(index)
-                $game_variables[$archipelago_data_vars.to_a[2]] = Marshal.dump($progressive_counts)
-                $game_variables[$archipelago_data_vars.to_a[1]] = Marshal.dump($archipelago.connect_info)
-                save_game_without_rescue(index)
-            rescue
-                delete_save_file(index)
-                false
-            end
-
-            def self.load_game(index)
-                load_game_without_rescue(index)
-                $progressive_counts = Marshal.load($game_variables[$archipelago_data_vars.to_a[2]])
-                $archipelago.connect_info = Marshal.load($game_variables[$archipelago_data_vars.to_a[1]])
-                $archipelago.connect
-            rescue 
-                false
-            end
+    module Cache
+        def self.custom(filename)
+            load_bitmap("Custom/", filename)
         end
     end
 #--------------------------------------------------------------------------
-# * Attach RPGMaker-specific listeners
+# * Override DataManager save/load methods
 #--------------------------------------------------------------------------
+    module DataManager
+        def self.make_save_contents
+            contents = {}
+            contents[:system]        = $game_system
+            contents[:timer]         = $game_timer
+            contents[:message]       = $game_message
+            contents[:switches]      = $game_switches
+            contents[:variables]     = $game_variables
+            contents[:self_switches] = $game_self_switches
+            contents[:actors]        = $game_actors
+            contents[:party]         = $game_party
+            contents[:troop]         = $game_troop
+            contents[:map]           = $game_map
+            contents[:player]        = $game_player
+            contents[:AP_connect_info] = $archipelago.connect_info if $load_autoconnect
+            contents[:AP_receiveditems_index] = $receiveditems_index
+            contents[:AP_progressive_counts] = $progressive_counts
+            contents
+        end
+
+        def self.extract_save_contents(contents)
+            $game_system        = contents[:system]
+            $game_timer         = contents[:timer]
+            $game_message       = contents[:message]
+            $game_switches      = contents[:switches]
+            $game_variables     = contents[:variables]
+            $game_self_switches = contents[:self_switches]
+            $game_actors        = contents[:actors]
+            $game_party         = contents[:party]
+            $game_troop         = contents[:troop]
+            $game_map           = contents[:map]
+            $game_player        = contents[:player]
+            $archipelago.connect_info = contents[:AP_connect_info] if $load_autoconnect
+            $receiveditems_index = contents[:AP_receiveditems_index]
+            $progressive_counts = contents[:AP_progressive_counts]
+        end
+
+        def self.load_game(index)
+            load_game_without_rescue(index)
+            $archipelago.connect if $load_autoconnect
+        rescue
+            false
+        end
+    end
+#--------------------------------------------------------------------------
+# * On Connected: Begin ItemHandling thread
+#--------------------------------------------------------------------------
+
+    # This is extremely bad and I wish I did not have to do this
+    unhandled_items = []
+    $archipelago.add_listener("Connected") do |msg|
+        Thread.new do
+            loop do
+                sleep 0.1
+                if unhandled_items.any?
+                    unhandled_items.each do |item|
+                        eval_target = $expanded_receiveditem_methods.fetch(item, "puts \"[Archipelago_RGSS3] No defined method for ReceivedItem ID #{item}!\"")
+                        eval(eval_target)
+                    end
+                end
+                break if $archipelago.client_connect_status == Archipelago::ConnectStatus::DISCONNECTED
+            end
+        end
+    end
+
+    $receiveditems_index = 0
     $archipelago.add_listener("ReceivedItems") do |msg|
         item_counter = msg["index"]
 
         msg["items"].each do |item|
-            if $game_variables[$archipelago_data_vars.to_a[0]] == item_counter
-                eval_target = $expanded_receiveditem_methods.fetch(item["item"], "puts \"[Archipelago_RGSS3] No defined method for ReceivedItem ID #{item["item"]}!\"")
-                eval(eval_target) 
-                $game_variables[$archipelago_data_vars.to_a[0]] += 1
+            if $receiveditems_index == item_counter
+                unhandled_items << item["item"]
+                $receiveditems_index += 1
             end
             item_counter += 1
         end
     end
 
-  
+    # For future me, here's the old code but commented out
+    #$receiveditems_index = 0
+    #$archipelago.add_listener("ReceivedItems") do |msg|
+    #    item_counter = msg["index"]
+    #
+    #    msg["items"].each do |item|
+    #        if $receiveditems_index == item_counter
+    #            eval_target = $expanded_receiveditem_methods.fetch(item, "puts \"[Archipelago_RGSS3] No defined method for ReceivedItem ID #{item}!\"")
+    #            eval(eval_target)
+    #            $receiveditems_index += 1
+    #        end
+    #        item_counter += 1
+    #    end
+    #end
+
+
+
