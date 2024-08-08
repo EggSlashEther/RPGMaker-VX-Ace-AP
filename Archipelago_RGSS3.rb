@@ -334,6 +334,21 @@
         end
     end
 #--------------------------------------------------------------------------
+# * Override Scene_Title.start to kill Archipelago connection
+#--------------------------------------------------------------------------
+    class Scene_Title < Scene_Base
+        def start
+            $archipelago.disconnect
+            super
+            SceneManager.clear
+            Graphics.freeze
+            create_background
+            create_foreground
+            create_command_window
+            play_title_music
+        end
+    end
+#--------------------------------------------------------------------------
 # * On Connected: Begin ItemHandling thread
 #--------------------------------------------------------------------------
 
@@ -363,7 +378,7 @@
         item_counter = msg["index"]
 
         msg["items"].each do |item|
-            if $receiveditems_index >= item_counter
+            if $receiveditems_index == item_counter
                 unhandled_items.push(item["item"])
                 $receiveditems_index += 1
             end

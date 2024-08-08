@@ -27,6 +27,8 @@ module Archipelago
                 if @client.client_connect_status == ConnectStatus::CONNECTED
                     id_arguments.each do |id|
                         @checked_locations << id if id.is_a?(Integer)
+                        @checked_locations.concat(id) if id.is_a?(Array)
+                        @checked_locations.concat(id.to_a) if id.is_a?(Range)
                     end
 
                     check_packet = Packets::LocationChecks.new(@checked_locations)
