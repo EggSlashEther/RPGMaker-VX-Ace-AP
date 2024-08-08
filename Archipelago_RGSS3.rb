@@ -363,7 +363,7 @@
         item_counter = msg["index"]
 
         msg["items"].each do |item|
-            if $receiveditems_index == item_counter
+            if $receiveditems_index >= item_counter
                 unhandled_items.push(item["item"])
                 $receiveditems_index += 1
             end
