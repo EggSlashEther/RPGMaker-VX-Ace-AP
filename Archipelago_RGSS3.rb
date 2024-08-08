@@ -338,23 +338,25 @@
 #--------------------------------------------------------------------------
 
     # This is extremely bad and I wish I did not have to do this
-    unhandled_items = []
+    unhandled_items = Queue.new
     $archipelago.add_listener("Connected") do |msg|
         Thread.new do
             loop do
-                sleep 0.1
-                if unhandled_items.any?
-                    current = unhandled_items
-                    unhandled_items = unhandled_items - current
-                    current.each do |item|
-                        eval_target = $expanded_receiveditem_methods.fetch(item, "puts \"[Archipelago_RGSS3] No defined method for ReceivedItem ID #{item}!\"")
-                        eval(eval_target)
-                    end
+                item = unhandled_items.pop(true) rescue nil
+                if item
+                    eval_target = $expanded_receiveditem_methods.fetch(item, "puts \"[Archipelago_RGSS3] No defined method for ReceivedItem ID #{item}!\"")
+                    eval(eval_target)
+                else
+                    sleep 0.1
                 end
                 break if $archipelago.client_connect_status == Archipelago::ConnectStatus::DISCONNECTED
             end
         end
     end
+
+#--------------------------------------------------------------------------
+# * On ReceivedItems: Process Index, push item to handler
+#--------------------------------------------------------------------------
 
     $receiveditems_index = 0
     $archipelago.add_listener("ReceivedItems") do |msg|
@@ -362,7 +364,7 @@
 
         msg["items"].each do |item|
             if $receiveditems_index == item_counter
-                unhandled_items << item["item"]
+                unhandled_items.push(item["item"])
                 $receiveditems_index += 1
             end
             item_counter += 1
