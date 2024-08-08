@@ -169,7 +169,22 @@ module Archipelago
             end
 
             add_listener("PrintJSON") do |msg|
-                puts msg
+                message = ""
+                msg["data"].each do |data|
+                    case data["type"]
+                    when "player_id"
+                        message << @data.slot_info[data["text"]]["name"]
+                    when "item_id"
+                        id = data["player"].to_s
+                        message << @items.name(@data.slot_info[id]["game"], data["text"].to_i)
+                    when "location_id"
+                        id = data["player"].to_s
+                        message << @locations.name(@data.slot_info[id]["game"], data["text"].to_i)
+                    else
+                        message << data["text"]
+                    end
+                end
+                puts message
             end
 
             add_listener("DataPackage") do |msg|

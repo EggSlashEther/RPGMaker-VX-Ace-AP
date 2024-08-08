@@ -57,7 +57,7 @@
 #  reconnect to its multiworld when loading a save.
 #    * DEFAULT: true
 #--------------------------------------------------------------------------
-    $archipelago_gamename = "ChecksFinder"
+    $archipelago_gamename = "RPGMaker VX Ace"
     $archipelago_items_handling = Archipelago::ItemsHandlingFlags::REMOTE_ALL
     $load_autoconnect = true
 #--------------------------------------------------------------------------
