@@ -279,14 +279,6 @@
         "items_handling" => $archipelago_items_handling
     }
 #--------------------------------------------------------------------------
-# * Override Cache to load Custom icons
-#--------------------------------------------------------------------------
-    module Cache
-        def self.custom(filename)
-            load_bitmap("Custom/", filename)
-        end
-    end
-#--------------------------------------------------------------------------
 # * Override DataManager save/load methods
 #--------------------------------------------------------------------------
     module DataManager
