@@ -5,7 +5,7 @@
 
  ## Usage
  1. Replace your RPGMaker game's executable with [mkxp-z](https://github.com/mkxp-z/mkxp-z), either by building it yourself or using an automatic build.
- 2. Copy and paste the "Ruby" folder and "mkxp.json" into the game directory. Edit "mkxp.json" to match your environment!
+ 2. Copy and paste the "Ruby" and "Custom" folders into the game directory.
  3. Add the contents of Archipelago_RGSS3 to your game's Scripts. (Script Editor -> Insert new script -> Paste Archipelago_RGSS3's contents into that new script)
  4. Configure the script under the CONFIGURATION section within it.
 	
