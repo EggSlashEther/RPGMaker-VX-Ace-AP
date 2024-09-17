@@ -35,10 +35,10 @@ module Archipelago
             @terminate = false
             Thread.new do
                 begin
-                    url = "wss://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
+                    url = "ws://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
                     @client_socket = WebSocket::Client::Simple.connect(url)
                 rescue
-                    url = "ws://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
+                    url = "wss://#{@connect_info["hostname"]}:#{@connect_info["port"]}"
                     @client_socket = WebSocket::Client::Simple.connect(url)
                 end
             
@@ -118,9 +118,11 @@ module Archipelago
                 @data.import_game_data(msg)
 
                 password = nil
-                if @data.game_data["password"]
+                if @data.game_data["password"] and @connect_info["password"].empty?
                     puts "Password:"
                     password = STDIN.gets.strip
+                elsif @data.game_data["password"]
+                    password = @connect_info["password"]
                 end
 
                 connect_packet = Packets::Connect.new(
