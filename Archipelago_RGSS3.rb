@@ -268,16 +268,107 @@
         end
     end
 #--------------------------------------------------------------------------
+# * Method: Use Text Input for details
+#--------------------------------------------------------------------------
+    def text_input(prompt)
+        Input.update
+        Graphics.update
+
+        # A buffer to store the text in
+        text = ""
+
+        # Turn on text input
+        Input.text_input = true
+
+        # Wait until Enter gets pressed
+        until Input.triggerex?(:RETURN)
+
+            # Check for Ctrl+C and Ctrl+V!
+            if Input.pressex?(:LCTRL) || Input.pressex?(:RCTRL)
+                Input.clipboard = text if Input.triggerex?(:C)
+                # << is faster than +=
+                text << Input.clipboard if Input.triggerex?(:V)
+            elsif Input.triggerex?(:BACKSPACE) or Input.timeex?(:BACKSPACE) >= 0.75
+                text = text.chop
+            else
+                text << Input.gets
+            end
+
+            # Next frame
+            Input.update
+            Graphics.update
+            $stdout.clear_screen
+            puts "#{prompt} #{text}"
+        end
+        Input.text_input = false
+        $stdout.clear_screen
+        return text
+    end
+#--------------------------------------------------------------------------
+# * Method: Use Keyboard Input to get connect details
+#--------------------------------------------------------------------------
+    def get_connect_details
+        hostname = text_input("Hostname (will default to archipelago.gg if left blank):")
+        port = text_input("Port:")
+        name = text_input("Seat name:")
+        password = text_input("Password (can be blank):")
+
+        $archipelago.connect_info["hostname"] = hostname.empty? ? "archipelago.gg" : hostname
+        $archipelago.connect_info["port"] = port.to_i
+        $archipelago.connect_info["name"] = name
+        $archipelago.connect_info["password"] = password unless password.empty?
+    end
+#--------------------------------------------------------------------------
+# * Create a new TextInput Scene
+#--------------------------------------------------------------------------
+    class Scene_APConnectInput < Scene_Base
+        def start
+            super
+            draw_image
+        end
+        def post_start
+            super
+            begin_text_input
+            return_scene
+        end
+        def draw_image
+            @pic = Sprite.new
+            @pic.bitmap=Cache.custom("Pictures/text_input")
+        end
+        def begin_text_input
+            get_connect_details
+            $archipelago.connect
+        end
+        def update
+            super
+        end
+    end
+#--------------------------------------------------------------------------
+# * Add get_connect method to Archipelago module
+#--------------------------------------------------------------------------
+    module Archipelago
+        class Client
+            def get_connect
+                SceneManager.call(Scene_APConnectInput) unless @client_connect_status == Archipelago::ConnectStatus::CONNECTED
+            end
+        end
+    end
+#--------------------------------------------------------------------------
 # * Initialize Archipelago Client
 #--------------------------------------------------------------------------
     $archipelago = Archipelago::Client.new
     $archipelago.connect_info = {
-        "hostname" => CFG["Archipelago_Hostname"],
-        "port" => CFG["Archipelago_Port"].to_i,
         "game" => $archipelago_gamename,
-        "name" => CFG["Archipelago_Name"],
         "items_handling" => $archipelago_items_handling
     }
+#--------------------------------------------------------------------------
+# * Override Cache to load Custom icons
+#--------------------------------------------------------------------------
+    module Cache
+        def self.custom(filename)
+            load_bitmap("Custom/Graphics/", filename)
+        end
+    end
 #--------------------------------------------------------------------------
 # * Override DataManager save/load methods
 #--------------------------------------------------------------------------
