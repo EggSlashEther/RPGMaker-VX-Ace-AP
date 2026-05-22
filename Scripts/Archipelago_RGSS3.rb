@@ -426,10 +426,11 @@
     #----------------------------------------------------------------------
     # * On Bounced, RingLink: Change currency
     #----------------------------------------------------------------------
-
-        $archipelago.add_listener("Bounced") do |msg|
-            if msg["tags"].include?("RingLink") and $ringlink_uuid != msg["data"]["source"]
-                $game_party.gain_gold_ringlink((msg["data"]["amount"] * $ringlink_conversion_rate).to_i)
+        if $ringlink_enabled
+            $archipelago.add_listener("Bounced") do |msg|
+                if msg["tags"].include?("RingLink") and $ringlink_uuid != msg["data"]["source"]
+                    $game_party.gain_gold_ringlink((msg["data"]["amount"] * $ringlink_conversion_rate).to_i)
+                end
             end
         end
     end
